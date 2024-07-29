@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .mform {
+            background-color: #d156c1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1 {
+            color: #ccc;
+        }
+
+        .container {
+            background-color: transparent;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .fbuttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px;
+            color: #61d82a;
+        }
+
+        button[type="paste"] {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button[type="submit"] {
+            background-color: #008CBA;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Add hover effects for buttons */
+        button[type="paste"]:hover {
+            background-color: #3e8e41;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #007bff;
+        }
+
+        #urlInput {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+            width: 300px;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+            width: 150px;
+            font-size: 16px;
+            color: #333;
+            background-color: #fff;
+        }
+
+        select:hover {
+            border-color: #aaa;
+        }
+
+        select:focus {
+            border-color: #666;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Add animation for select menu */
+        select {
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        select:hover {
+            background-color: #f0f0f0;
+        }
+
+        select:focus {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="download-form" class="mform">
+        <h1 class="container">Video Download</h1>
+        <div class="fbuttons">
+            <label for="url" style="color: #ccc;">URL:</label>
+            <input type="text" id="url" name="url" required>
+            <button type="paste" id="pasteButton" style="margin-left: 10px;">Paste</button>
+            <select id="type" name="type" style="margin-left: 10px;">
+                <option value="insta-reel">Instagram Reels</option>
+                <option value="insta-post">Instagram Post</option>
+                <option value="yt-audio">YouTube Audio</option>
+                <option value="yt-video">YouTube Video</option>
+            </select>
+        </div>
+
+        <div class="fbuttons">
+            <button type="submit">Download</button>
+        </div>
+    </form>
+    <div id="result"></div>
+    
+
+    <script>
+        document.getElementById('download-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const type = document.getElementById('type').value;
+            const url = document.getElementById('url').value;
+
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type, url }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('result').innerHTML = `<a class="mform" href="${data.downloadUrl}">Download Successfully</a>`;
+                    } else {
+                        document.getElementById('result').innerText = data.error;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').innerText = 'Error: ' + error;
+                });
+        });
+
+        document.getElementById('pasteButton').addEventListener('click', async function () {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('url').value = text;
+            } catch (err) {
+                document.getElementById('result').innerText = 'Failed to read clipboard contents: ' + err;
+            }
+        });
+    </script>
+</body>
+
+</html>
