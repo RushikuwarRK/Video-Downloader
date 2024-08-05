@@ -1,0 +1,11 @@
+Description,Code
+"Print 'Hello, World!'","print('Hello, World!')"
+Add two numbers and return the result,"def add(a, b): return a + b"
+Find the length of a list,len(my_list)
+Check if a number is even,def is_even(n): return n % 2 == 0
+Read a file and print its contents,"with open('file.txt', 'r') as file: print(file.read())"
+Create a list of squares from 1 to 10,"[x**2 for x in range(1, 11)]"
+Convert a string to lowercase,'Hello'.lower()
+Sort a list of numbers,"sorted([4, 2, 9, 1])"
+Create a dictionary from two lists,"dict(zip(keys, values))"
+Calculate the factorial of a number,def factorial(n): return 1 if n == 0 else n * factorial(n-1)
