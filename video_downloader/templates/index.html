@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,12 +22,13 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            max-width: 500px;
+            max-width: 450px;
             width: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
+            height: 350px;
         }
 
         h1 {
@@ -39,6 +39,7 @@
             background-color: transparent;
             padding: 5px;
             border-radius: 10px;
+            border: none;
         }
 
         .fbuttons {
@@ -49,7 +50,7 @@
             color: #61d82a;
         }
 
-        button[type="paste"] {
+        button[type="button"] {
             background-color: #4CAF50;
             color: #fff;
             padding: 10px 20px;
@@ -68,7 +69,7 @@
         }
 
         /* Add hover effects for buttons */
-        button[type="paste"]:hover {
+        button[type="button"]:hover {
             background-color: #3e8e41;
         }
 
@@ -117,16 +118,36 @@
         select:focus {
             background-color: #e0e0e0;
         }
+
+        .progress-container {
+            width: 80%;
+            background-color: #e0e0e0;
+            border-radius: 25px;
+            padding: 3px;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 0;
+            max-width: 100%; /* Ensure the width does not exceed the container */
+            height: 30px;
+            background-color: #76c7c0;
+            border-radius: 25px;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+            transition: width 0.5s;
+        }
     </style>
 </head>
-
 <body>
     <form id="download-form" class="mform">
         <h1 class="container">Video Download</h1>
         <div class="fbuttons">
             <label for="url" style="color: #ccc;">URL:</label>
             <input type="text" id="url" name="url" required>
-            <button type="paste" id="pasteButton" style="margin-left: 10px;">Paste</button>
+            <button type="button" id="pasteButton" style="margin-left: 10px;">Paste</button>
             <select id="type" name="type" style="margin-left: 10px;">
                 <option value="insta-reel">Instagram Reels</option>
                 <option value="insta-post">Instagram Post</option>
@@ -134,49 +155,86 @@
                 <option value="yt-video">YouTube Video</option>
             </select>
         </div>
-
         <div class="fbuttons">
             <button type="submit">Download</button>
         </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
     </form>
-    <div id="result"></div>
-    
-
+    <div id="download-link"></div>
     <script>
-        document.getElementById('download-form').addEventListener('submit', function (event) {
+        document.getElementById('download-form').addEventListener('submit', async (event) => {
             event.preventDefault();
-            const type = document.getElementById('type').value;
-            const url = document.getElementById('url').value;
 
-            fetch('/download', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ type, url }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('result').innerHTML = `<a class="mform" href="${data.downloadUrl}">Download Successfully</a>`;
-                    } else {
-                        document.getElementById('result').innerText = data.error;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('result').innerText = 'Error: ' + error;
+            const progressBar = document.getElementById('progress-bar');
+            const downloadLink = document.getElementById('download-link');
+            const formData = new FormData(event.target);
+            const url = formData.get('url');
+            const type = formData.get('type');
+
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            downloadLink.innerHTML = '';
+
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url, type })
                 });
-        });
+                const data = await response.json();
 
-        document.getElementById('pasteButton').addEventListener('click', async function () {
+                if (data.success) {
+                    const downloadUrl = data.downloadUrl;
+                    const interval = setInterval(async () => {
+                        const progressResponse = await fetch('/progress');
+                        const progressData = await progressResponse.json();
+                        const progress = progressData.progress;
+
+                        progressBar.style.width = progress + '%';
+                        progressBar.textContent = progress + '%';
+
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            downloadLink.innerHTML = `<a href="${downloadUrl}">Download File</a>`;
+                        }
+                    }, 100);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        });
+        const interval = setInterval(async () => {
+            const progressResponse = await fetch('/progress');
+            const progressData = await progressResponse.json();
+            let progress = progressData.progress;
+
+            // Cap the progress at 100%
+            progress = Math.min(progress, 100);
+
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+
+            if (progress >= 100) {
+                clearInterval(interval);
+                downloadLink.innerHTML = `<a href="${downloadUrl}">Download File</a>`;
+            }
+        }, 1000);
+
+
+        document.getElementById('pasteButton').addEventListener('click', async () => {
             try {
                 const text = await navigator.clipboard.readText();
                 document.getElementById('url').value = text;
             } catch (err) {
-                document.getElementById('result').innerText = 'Failed to read clipboard contents: ' + err;
+                alert('Failed to read clipboard contents: ' + err);
             }
         });
     </script>
 </body>
-
 </html>
